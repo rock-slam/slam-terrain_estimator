@@ -1,0 +1,10 @@
+<package>
+    <description brief="Terrain type estimation library">
+    </description>
+    <author>Patrick.merz_paranhso@dfki.de</author>
+    <copyright>
+        DFKI/robotik@dfki.de
+    </copyright>
+    <license>LGPL v2 or later</license>
+    <depend package="fftw3" />
+</package>
