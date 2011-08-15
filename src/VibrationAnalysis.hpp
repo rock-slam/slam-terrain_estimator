@@ -31,15 +31,15 @@
 namespace terrain_estimator
 {
 
-//     template<uint fft_points> 
-//     struct TerrainSample {
-// 	    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-// 	    double mean_agular_velocity; 
-// 	    double std_angular_vel; 
-// 	    double mean_gait; 
-// 	    double std_gait; 
-// 	    Eigen::Matrix<double,fft_points / 2 + 1,1> acc_frequency; 
-//     };
+    template <unsigned int fft_points>
+    struct TerrainSample {
+	    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	    double mean_agular_velocity; 
+	    double std_angular_vel; 
+	    double mean_gait; 
+	    double std_gait; 
+	    Eigen::Matrix<double,fft_points / 2 + 1,1> acc_frequency; 
+    };
     
     struct InputSample { 
 	double acc;
@@ -51,6 +51,9 @@ namespace terrain_estimator
     {
 	public:
 	    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	    
+	    /** number of points in the fft */ 
+	    static const unsigned int FFT_POINTS = 128;
   
    	    VibrationAnalysis(VibrationConfiguration conf);
 
@@ -62,23 +65,9 @@ namespace terrain_estimator
 	    /** adds the input information for the sample */ 
 	    void addSample(double acc, double gait, double angular_velocity); 
 	    
-// 	    template <uint fft_points> TerrainSample<fft_points> getTerrainSample()
-// 	    {
-// 	      
-// 		calculateFFT(); 
-// 		
-// 		TerrainSample<fft_points> terrain_sample; 	
-// 		terrain_sample.mean_agular_velocity = sum_angular_vel / inputSamples.size(); 
-// 		terrain_sample.mean_gait = sum_gait / inputSamples.size(); 
-// 		terrain_sample.std_gait = sqrt( (square_sum_gait - sum_gait*(sum_gait/inputSamples.size()))/(inputSamples.size() - 1) );
-// 		terrain_sample.std_angular_vel = sqrt( (square_sum_angular_vel - sum_angular_vel*(sum_angular_vel/inputSamples.size()))/(inputSamples.size() - 1) );
-// 		
-// 		for( int i = 0; i < fft_points/2 + 1; i++) 
-// 		    terrain_sample.acc_frequency(i,1) = sqrt( pow(out[i][0], 2) + pow(out[i][1], 2) );
-// 		
-// 		return terrain_sample;
-// 		
-// 	    } 
+	    /** creates and return the current terrain sample */ 
+	    TerrainSample<FFT_POINTS> getTerrainSample();
+
 	    
 	public: 
 	    /**the number of acceleration added */

@@ -11,8 +11,6 @@ namespace terrain_estimator {
 	unsigned int lines_per_terrain_sample;
 	/** minimum number of lines that dont overlap with the sample */
 	unsigned int min_line_advance; 
-	/** number of points in the fft */ 
-	unsigned int n_fft_points; 
 	/** maximal gait standart deviation to accept the sample */
 	double max_gait_STD;
 	/** maximal angular velocity standart deviation to accept the sample */
