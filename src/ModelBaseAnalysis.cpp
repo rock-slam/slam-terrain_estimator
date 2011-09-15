@@ -4,31 +4,131 @@ using namespace Eigen;
 using namespace terrain_estimator;
 using namespace std;
 
-SlipDetectionBasedOnDistanceBetweenAxis::SlipDetectionBasedOnDistanceBetweenAxis(double front_encoder, double rear_encoder, double angle_between_legs)
+SlipDetectionModelBased::~SlipDetectionModelBased()
+{
+    
+}
+
+SlipDetectionModelBased::SlipDetectionModelBased(double axis_rotation, uint fl, uint fr, uint rl, uint rr)
 { 
-      transform << 10, 0; 
-      init_front_encoder = front_encoder; 
-      init_rear_encoder = rear_encoder; 
-      this->angle_between_legs =  angle_between_legs;
-      
-      //place both frames within the same reference 
-      //The transformation between the back wheel frame to the front wheel frame 
-      Vector2d pos_front = positionInAxisFrame(front_encoder, init_front_encoder); 
-      Vector2d pos_back = positionInAxisFrame(rear_encoder, init_rear_encoder); 
-      //place both frame within the same reference 
-      pos_front = pos_front + transform; 
-      
-      reference_dist = sqrt( pow(pos_front[0] - pos_back[0],2) + pow(pos_front[1] - pos_back[1],2) ); 
-  
+      this->axis_rotation = axis_rotation; 
+     
+      this->fl = fl; 
+      this->fr = fr; 
+      this->rl = rl; 
+      this->rr = rr; 
 } 
 
-double SlipDetectionBasedOnDistanceBetweenAxis::numberOfCycles(double encoder) 
+
+Eigen::Vector4d SlipDetectionModelBased::slipValue(Vector4d translation, double right_translation, double left_translation)
+{
+    Vector4d slip; 
+    slip[fr] = translation[fr] - right_translation; 
+    slip[rr] = translation[rr] - right_translation; 
+    slip[fl] = translation[fl] - left_translation; 
+    slip[rl] = translation[rl] - left_translation; 
+    return slip; 
+}
+bool SlipDetectionModelBased::slipDetection(Vector4d translation, double delta_heading_measured, double slip_threashold)
+{
+    
+    delta_theta_model = ( (translation[fr] + translation[rr])/2 - (translation[fl] + translation[rl])/2 ) / axis_rotation; 
+
+    double right_translation;
+    double left_translation;
+    Matrix4d slip_hypotesis; 
+    
+    //Hipotesis 0 - Front Right Didn't slip 
+    right_translation = translation[fr]; 
+    left_translation = right_translation - axis_rotation * delta_theta_measured; 
+    slip_hypotesis.col(fr) = slipValue(translation, right_translation, left_translation); 
+    
+    //Hipotesis 1 - Rear Right Didn't slip 
+    right_translation = translation[rr]; 
+    left_translation = right_translation - axis_rotation * delta_theta_measured;     
+    slip_hypotesis.col(rr) = slipValue(translation, right_translation, left_translation); 
+    
+    //Hipotesis 2 - Front Left Didn't slip 
+    left_translation = translation[fl]; 
+    right_translation = left_translation + axis_rotation * delta_theta_measured;     
+    slip_hypotesis.col(fl) = slipValue(translation, right_translation, left_translation); 
+    
+    //Hipotesis 3 - Front Right Didn't slip 
+    left_translation = translation[rl]; 
+    right_translation = left_translation + axis_rotation * delta_theta_measured; 
+    slip_hypotesis.col(rl) = slipValue(translation, right_translation, left_translation); 
+    
+   // Matrix4d abs_hyp = slip_hypotesis.array().abs(); 
+    total_slip.setZero(); 
+    for(int i = 0; i < 4; i++) 
+	total_slip.transpose() = total_slip.transpose() + slip_hypotesis.row(i); 
+    
+    total_slip = total_slip.array()/3; 
+    
+    bool has_slip; 
+    slip_votes.setZero(); 
+    for( int i =0; i < 4; i++) 
+	for( int j = 0; j < 4; j++ ) 
+	    if( fabs(slip_hypotesis(i,j)) > slip_threashold )
+	    {
+		slip_votes[i] = slip_votes[i] + 1; 
+		has_slip = true; 
+	    }
+  
+    return has_slip; 
+    
+}
+
+bool SlipDetectionModelBased::hasSingleWheelSliped()
+{
+    
+    //the number of wheels with more than 2 votes as sliped 
+    int num_wheels_votes = 0; 
+    for( int i = 0; i < 4; i++) 
+	if( slip_votes[i] >= 2) 
+	    num_wheels_votes++; 
+	
+    if(num_wheels_votes == 1)
+	return true; 
+    else 
+	return false; 
+    
+}
+
+bool SlipDetectionModelBased::hasThisWheelSingleSliped(int wheel)
+{
+
+    if(getWheelSlipSingleCase() ==  wheel)
+	return true; 
+    else 
+	return false; 
+    
+}
+
+
+double SlipDetectionModelBased::getWheelSlipSingleCase(){ 
+  
+    if(!hasSingleWheelSliped())
+	return -1; 
+
+    for( int i = 0; i < 4; i++) 
+	if( slip_votes[i] >= 2) 
+	    return i; 
+    
+    return -1; 
+} 
+
+
+
+
+    
+double AsguardOdometry::numberOfCycles(double encoder) 
 {
     return floor(encoder / angle_between_legs);   
     
 }
 
-double SlipDetectionBasedOnDistanceBetweenAxis::getLegPos(double external_encoder_value) 
+double AsguardOdometry::getLegPos(double external_encoder_value) 
 { 
   double legPos = external_encoder_value - (round(external_encoder_value / angle_between_legs) * angle_between_legs);
     
@@ -39,40 +139,23 @@ double SlipDetectionBasedOnDistanceBetweenAxis::getLegPos(double external_encode
     return legPos;
 }
 
-Eigen::Vector2d SlipDetectionBasedOnDistanceBetweenAxis::positionInAxisFrame(double encoder, double initial_encoder)
+double AsguardOdometry::translationAxis(double encoder, double initial_encoder)
 {
     double leg_pos = getLegPos(encoder); 
-    
+    double init_leg_pos = getLegPos(initial_encoder); 
     //the number of cycle since the initial encoder value given 
     double num_cycles = numberOfCycles( encoder )- numberOfCycles(initial_encoder); 
-   
-    //the position with reference to the axis frame 
-    Vector2d pos(num_cycles * 2 * sin(angle_between_legs/2) + sin(angle_between_legs/2) - sin(leg_pos), cos(leg_pos) - cos ( angle_between_legs/2 )); 
+
+    //the translation in relation with the ground  
+    return (num_cycles * 2 * sin(angle_between_legs/2) + sin(angle_between_legs/2) - sin(leg_pos) - ( sin(angle_between_legs/2) - sin(init_leg_pos))) * radius; 
     
-    return pos;
 }
 
-double SlipDetectionBasedOnDistanceBetweenAxis::distanceVariation(double front_wheel_encoder, double back_wheel_encoder)
-{
-    //The frame is (0,0) at the beginning of the first cycle (double contact point) given by the initial encoder value
-    //the position with reference to the axis frame 
-    pos_front = positionInAxisFrame(front_wheel_encoder, init_front_encoder); 
-    pos_back = positionInAxisFrame(back_wheel_encoder, init_rear_encoder); 
-    
-    //place both frame within the same reference 
-    pos_front = pos_front + transform; 
-    
-    return sqrt( pow(pos_front[0] - pos_back[0],2) + pow(pos_front[1] - pos_back[1],2) ) - reference_dist; 
-  
+Vector4d AsguardOdometry::translationAxes(Vector4d encoder){
+    Vector4d translation; 
+    for(int i = 0; i < 4; i++) 
+      translation[i] = translationAxis(encoder[i], init_encoder[i]); 
+    return translation; 
 }
 
-bool SlipDetectionBasedOnDistanceBetweenAxis::slipDetection(double front_encoder, double rear_encoder, double distance_threshold)
-{
-   distance = distanceVariation(front_encoder, rear_encoder); 
 
-   if( fabs(distance) > distance_threshold) 
-      return true; 
-  else
-      return false; 
-    
-}
