@@ -107,7 +107,7 @@ namespace terrain_estimator
     public: 
 	    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	    
-	    AsguardOdometry(double angle_between_legs, double radius); 
+	    AsguardOdometry(double angle_between_legs, double radius){this->angle_between_legs = angle_between_legs; this->radius = radius; } 
 	    
 
 	    void setInitialEncoder(Vector4d encoder){ this->init_encoder = encoder; }  
