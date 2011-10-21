@@ -6,22 +6,93 @@
 
 #include "TerrainConfiguration.hpp" 
 #include <iostream>
+#include <vector>
 using namespace Eigen; 
 
 
 namespace terrain_estimator
 {
-  
+    /**
+     * \class HistogramTerrainClassification
+     * 
+     * \brief
+     * Creates a Histogram of the measured traction forces value.
+     * \author $Author: Patrick Merz Paranhos $
+     * \date $Date: 21/10/2011 $
+     * 
+     * Contact: patrick.merz_paranhos@dfki.de
+     */ 
+    class HistogramTerrainClassification {
+	public: 
+	    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	    
+	    /** 
+	    * The histogram goes from 0 to max_torque  
+	    * all values above max_torque are grouped in a single bin
+	    * The bin size is max_torque / num_bins-1 
+	    * @param numb_bins -  number of bins in the histogram 
+	    * @param max_torque - The histogram goes from 0 to max_torque 
+
+	    */ 
+	    HistogramTerrainClassification(int numb_bins, double max_torque); 
+	    
+	    /**
+	     * Adds a measured traction force to the histogram 
+	     * The absolute value of the torque is added to the histogram
+	     * @param traction - the measured traction 
+	    */
+	    void addTraction( double traction ); 
+	    
+	    /**
+	     * Clears the histogram
+	     */ 
+	    void clearHistogram();
+	    
+	    /**
+	     * @returns a normalized copy of the histogram 
+	     */ 
+	    std::vector<double> getHistogram(); 
+	    
+	    /** 
+	     * @return the number of points added to the histogram 
+	     */ 
+	    double getNumberPoints(){ return number_points; }
+	    
+	private:
+	    /** The histogram goes from 0 to max_torque
+	     * all values above max_torque are grouped in a single bin*/ 
+	    double max_torque; 
+	    
+	    /** number of bins in  the histogram */ 
+	    int numb_bins; 
+	    
+	    /** the histogram for the traction */
+	    std::vector<double> histogram;
+	    
+	    /** the number of traction measurements added to the histogram */
+	    double number_points; 
+	    
+	    /** the size of a bin */ 
+	    double bin_size; 
+    }; 
+    
     /**
      * \class SlipDetectionModelBased
      * 
      * \brief
      * Estimates slip using the vehicle model constrains. 
      * 
-     * Do to the Vehicle mechanical constrain. The distance between axis should be constant. 
-     * Using the translation given by the encouder and a heading given by a measurement unit this class tryes to detect a wheel slip.  
-     * The problem is underderterminated. So the slip detection works with hypotesis. 
+     * Do to the Vehicle mechanical constrain the distance between axis should be constant. 
+     * Using the translation given by the encouder and a heading given by a measurement unit one can estimate the position of each of the wheel axis.  
+     *But do to the fact that each wheel can slip the problem is underderterminated. 
      * 
+     * 4 hypotesis are created: each hypotesis assumes that one of the wheels didn't slip
+     * Once you consider that 1 wheel has 0 meter slip (hypotesis) the problem becomes determined. 
+     * Solving the problem will yeal 3 slip values, one for each wheel. 
+     * If this slip value is above a certain threashold, that wheel is considered to be slipping under that hypotesis. 
+     * 
+     * Once all 4 hypotesis have been tested, each will have casted a vote if the other wheels are considered to be slipping or not. 
+     * If a wheel get's 3 votes, while all other wheels have under 2 votes this wheel is considered to be very likely slipping.  
      * 
      * \author $Author: Patrick Merz Paranhos $
      * \date $Date: 15/09/2011 $
@@ -63,10 +134,13 @@ namespace terrain_estimator
 	    */
 	    bool hasThisWheelSingleSliped(int wheel); 
 	    
-	    
+	    /** The change in the heading between times step in the model */ 
 	    double delta_theta_model;
+	    /** The change in the heading between time steps measured by the imu */ 
 	    double delta_theta_measured;
+	    /** The distance sliped in the defined time step (this value is calulate by averaging the distance slip in each hypotesis) */ 
 	    Eigen::Vector4d total_slip;
+	    /** The number of votes casted by each of the hypotesis if this wheel is slipping or not */ 
 	    Vector4d slip_votes; 
 	    
 	private:

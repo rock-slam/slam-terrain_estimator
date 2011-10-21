@@ -3,6 +3,8 @@
 
 
 namespace terrain_estimator {
+    
+    
     /** 
      * Configuration on how to construct a point cloud 
      */ 

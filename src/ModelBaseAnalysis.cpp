@@ -4,6 +4,61 @@ using namespace Eigen;
 using namespace terrain_estimator;
 using namespace std;
 
+HistogramTerrainClassification::HistogramTerrainClassification(int numb_bins, double max_torque)
+{
+  
+    for(int i =0; i < numb_bins ; i++) 
+	histogram.push_back(0); 
+    
+    this->numb_bins = numb_bins; 
+    this->max_torque = max_torque;
+    number_points = 0; 
+    bin_size = max_torque / (numb_bins-1); 
+}
+
+
+void HistogramTerrainClassification::addTraction(double traction)
+{
+    traction = fabs(traction); 
+    
+    number_points = number_points + 1;
+   
+    for(int i = 0; i < numb_bins; i++) 
+    {
+	if (traction <= (i+1)*bin_size ) 
+	{
+	    histogram.at(i) = histogram.at(i) + 1; 
+	    return; 
+	}
+    }
+
+}
+
+void HistogramTerrainClassification::clearHistogram()
+{
+    histogram.clear(); 
+    
+    for(int i =0; i < numb_bins ; i++) 
+	histogram.push_back(0); 
+    
+    number_points = 0; 
+}
+
+std::vector<double> HistogramTerrainClassification::getHistogram()
+{
+    if( number_points == 0 ) 
+	return histogram; 
+    
+    std::vector<double> normalized_histogram; 
+    normalized_histogram = histogram; 
+    
+    for(int i = 0; i < numb_bins; i++) 
+	normalized_histogram.at(i) = normalized_histogram.at(i) / number_points; 
+    
+    return normalized_histogram; 
+}
+
+
 SlipDetectionModelBased::~SlipDetectionModelBased()
 {
     
@@ -58,12 +113,14 @@ bool SlipDetectionModelBased::slipDetection(Vector4d translation, double delta_h
     right_translation = left_translation + axis_rotation * delta_theta_measured; 
     slip_hypotesis.col(rl) = slipValue(translation, right_translation, left_translation); 
     
-   // Matrix4d abs_hyp = slip_hypotesis.array().abs(); 
+   
     total_slip.setZero(); 
     for(int i = 0; i < 4; i++) 
 	total_slip.transpose() = total_slip.transpose() + slip_hypotesis.row(i); 
     
     total_slip = total_slip.array()/3; 
+    for( int i =0; i < 4; i ++) 
+	total_slip[i] = fabs(total_slip[i]); 
     
     bool has_slip; 
     slip_votes.setZero(); 
