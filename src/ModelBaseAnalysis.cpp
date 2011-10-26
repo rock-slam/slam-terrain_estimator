@@ -4,7 +4,46 @@ using namespace Eigen;
 using namespace terrain_estimator;
 using namespace std;
 
+HistogramTerrainClassification::HistogramTerrainClassification(uint number_histograms, std::vector<double> svm_function)
+{
+    this->svm_function = svm_function; 
+    this->number_histograms = number_histograms; 
+}
 
+bool HistogramTerrainClassification::addHistogram(std::vector<double> histogram)
+{
+    histogram_list.push_back(histogram);
+    
+    if(histogram_list.size() < number_histograms)
+	return false; 
+    
+    if(histogram_list.size() > number_histograms)
+	histogram_list.pop_front(); 
+    
+    combined_histogram.clear(); 
+    for(uint i = 0; i < histogram.size(); i++) 
+	combined_histogram.push_back(histogram_list.at(0).at(i) / number_histograms );
+    
+    for(uint list = 1; list < number_histograms; list++)
+	for(uint i = 0; i < histogram.size(); i++) 
+	    combined_histogram.at(i) = combined_histogram.at(i) + histogram_list.at(list).at(i) / number_histograms;
+	
+    return true; 
+}
+
+std::vector<double> HistogramTerrainClassification::getCombinedHistogram()
+{
+    return combined_histogram; 
+}
+
+double HistogramTerrainClassification::getSVMValue()
+{
+    return 0; 
+}
+
+/** ********* TractionForceGroupedIntoStep **************** */ 
+/** ********* TractionForceGroupedIntoStep **************** */ 
+/** ********* TractionForceGroupedIntoStep **************** */ 
 
 TractionForceGroupedIntoStep::TractionForceGroupedIntoStep()
 {
@@ -85,41 +124,42 @@ void TractionForceGroupedIntoStep::initCurrentStep(uint wheel_idx)
     current_step[wheel_idx].traction.clear(); 
 }
 
-/** ********* HistogramTerrainClassification **************** */ 
-/** ********* HistogramTerrainClassification **************** */ 
-/** ********* HistogramTerrainClassification **************** */ 
+/** ********* HISTOGRAM **************** */ 
+/** ********* HISTOGRAM **************** */ 
+/** ********* HISTOGRAM **************** */ 
 
-HistogramTerrainClassification::HistogramTerrainClassification(int numb_bins, double max_torque)
+Histogram::Histogram(int numb_bins, double min_value, double max_value)
 {
   
     for(int i =0; i < numb_bins ; i++) 
 	histogram.push_back(0); 
     
     this->numb_bins = numb_bins; 
-    this->max_torque = max_torque;
+    this->min_value = min_value;
+    this->max_value = max_value;
     number_points = 0; 
-    bin_size = max_torque / (numb_bins-1); 
+    bin_size = fabs(max_value - min_value) / (numb_bins-2); 
 }
 
 
-void HistogramTerrainClassification::addTraction(double traction)
+void Histogram::addValue(double value)
 {
-    traction = fabs(traction); 
-    
     number_points = number_points + 1;
    
-    for(int i = 0; i < numb_bins; i++) 
+    for(int i = 0; i < numb_bins - 1 ; i++) 
     {
-	if (traction <= (i+1)*bin_size ) 
+	if (value <= min_value + i*bin_size ) 
 	{
 	    histogram.at(i) = histogram.at(i) + 1; 
 	    return; 
 	}
     }
+    histogram.back() = histogram.back()  + 1;
+    
 
 }
 
-void HistogramTerrainClassification::clearHistogram()
+void Histogram::clearHistogram()
 {
     histogram.clear(); 
     
@@ -129,7 +169,7 @@ void HistogramTerrainClassification::clearHistogram()
     number_points = 0; 
 }
 
-std::vector<double> HistogramTerrainClassification::getHistogram()
+std::vector<double> Histogram::getHistogram()
 {
     if( number_points == 0 ) 
 	return histogram; 

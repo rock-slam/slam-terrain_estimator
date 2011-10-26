@@ -7,13 +7,62 @@
 #include "TerrainConfiguration.hpp" 
 #include <iostream>
 #include <vector>
+#include <deque>
 using namespace Eigen; 
 
 
 namespace terrain_estimator
 {
 
-
+    /**
+     * \class HistogramTerrainClassification
+     * 
+     * \brief
+     * A list of the last N histograms of traction values are combined into a single histogram.  
+     * An SVM function is used to classify the combined histogram 
+     * \author $Author: Patrick Merz Paranhos $
+     * \date $Date: 26/10/2011 $
+     * 
+     * Contact: patrick.merz_paranhos@dfki.de
+     */ 
+    class HistogramTerrainClassification{
+	public: 
+	    
+	    /**
+	     * @param number_histograms - the number of histograms needed for a combined solution
+	     * @param svm_function - the svm classification function 
+	     */
+	    HistogramTerrainClassification(uint number_histograms, std::vector<double> svm_function);
+	    
+	    /** 
+	    * adds a histogram to the list of histograms 
+	    * @param histogram - a histogram of traction forces 
+	    * @return if there are enougth histograms for calculating a terrain classification solution (at least N histograms) 
+	    */
+	    bool addHistogram(std::vector<double> histogram);
+	    
+	    /**
+	     * @return the combined histogram 
+	     */
+	    std::vector<double> getCombinedHistogram(); 
+	    
+	    /**
+	     * @return the calculates SVM value for the combined histogram  
+	     */
+	    double getSVMValue(); 
+	
+	private: 
+	    std::deque < std::vector<double> > histogram_list; 
+	    
+	    std::vector<double> combined_histogram; 
+	    
+	    std::vector<double> svm_function; 
+	    
+	    double svm_value; 
+	    
+	    uint number_histograms;
+    }; 
+    
     /** A step information */ 
     struct step{
 	/** the tractions force of the step  */
@@ -109,33 +158,35 @@ namespace terrain_estimator
     };
     
     /**
-     * \class HistogramTerrainClassification
+     * \class Histogram
      * 
      * \brief
-     * Creates a Histogram of the measured traction forces value.
+     * Creates a Histogram for measured values 
+     * All value beneath min value are grouped in the first bin 
+     * All values above max_value are grouped in the last bin 
      * \author $Author: Patrick Merz Paranhos $
      * \date $Date: 21/10/2011 $
      * 
      * Contact: patrick.merz_paranhos@dfki.de
      */ 
-    class HistogramTerrainClassification {
+    class Histogram {
 	public: 
 	    /** 
-	    * The histogram goes from 0 to max_torque  
-	    * all values above max_torque are grouped in a single bin
-	    * The bin size is max_torque / num_bins-1 
+	    * The histogram goes from min_value to max_value  
+	    * all values above max_value are grouped in a single bin
+	    * all values beneath min_value are grouped in a single bin
+	    * So there are (numb_bins - 2) bins between max_value and min_value
+	    * The bin size is (max_value - min_value) / num_bins-2 
 	    * @param numb_bins -  number of bins in the histogram 
-	    * @param max_torque - The histogram goes from 0 to max_torque 
-
+	    * @param min_value - the minimal value of the histogram 
+	    * @param max_value - the minimal value of the histogram 
 	    */ 
-	    HistogramTerrainClassification(int numb_bins, double max_torque); 
+	    Histogram(int numb_bins, double min_value, double max_value); 
 	    
 	    /**
-	     * Adds a measured traction force to the histogram 
-	     * The absolute value of the torque is added to the histogram
-	     * @param traction - the measured traction 
+	     * @param value - a value to be added to the histogram
 	    */
-	    void addTraction( double traction ); 
+	    void addValue( double value ); 
 	    
 	    /**
 	     * Clears the histogram
@@ -153,17 +204,20 @@ namespace terrain_estimator
 	    double getNumberPoints(){ return number_points; }
 	    
 	private:
-	    /** The histogram goes from 0 to max_torque
-	     * all values above max_torque are grouped in a single bin*/ 
-	    double max_torque; 
+	    
+	    /** the maximum histogram value */ 
+	    double max_value; 
+	    
+	    /** the minimum histogram value */ 
+	    double min_value; 
 	    
 	    /** number of bins in  the histogram */ 
 	    int numb_bins; 
 	    
-	    /** the histogram for the traction */
+	    /** the histogram*/
 	    std::vector<double> histogram;
 	    
-	    /** the number of traction measurements added to the histogram */
+	    /** the number of measurements added to the histogram */
 	    double number_points; 
 	    
 	    /** the size of a bin */ 
@@ -224,16 +278,24 @@ namespace terrain_estimator
 	    double getWheelSlipSingleCase(); 
 	    
 	    /**
-	    * @return true if it is likely that his wheel sliped in the single sliped scenario 
+	    * @return true if it is likely that this wheel sliped in the single sliped scenario 
 	    */
-	    bool hasThisWheelSingleSliped(int wheel); 
+	    bool hasWheelSingleSliped(int wheel); 
+	    
+	    /**
+	    * @return true if it is likely that this wheel sliped
+	    */
+	    bool hasWheelSliped(int wheel); 
 	    
 	    /** The change in the heading between times step in the model */ 
 	    double delta_theta_model;
+	    
 	    /** The change in the heading between time steps measured by the imu */ 
 	    double delta_theta_measured;
+	    
 	    /** The distance sliped in the defined time step (this value is calulate by averaging the distance slip in each hypotesis) */ 
 	    Eigen::Vector4d total_slip;
+	    
 	    /** The number of votes casted by each of the hypotesis if this wheel is slipping or not */ 
 	    Vector4d slip_votes; 
 	    
