@@ -12,6 +12,102 @@ using namespace Eigen;
 
 namespace terrain_estimator
 {
+
+
+    /** A step information */ 
+    struct step{
+	/** the tractions force of the step  */
+	std::vector<double> traction; 
+	/** the maximal traction force in the step*/ 
+	double max_traction; 
+	/** the minimal traction force in the step*/ 
+	double min_traction; 
+	/** the minimal leg angle reading */ 
+	double min_angle; 
+	/** the maximal leg angle reading */ 
+	double max_angle; 	    
+	/** the step indentifier */ 
+	double id; 
+	/** last encoder reading */
+	double last_encoder; 
+    };
+    
+    /**
+     * \class TractionForceGroupedIntoStep
+     * 
+     * \brief
+     * Groups traction force measurement into a vector corresponding to a step
+     * A step is caracterize by the transition, double contact to single contact to double contact
+     * This class stores only the information of the previous completed step and a undergoing uncompleted Step. 
+     * 
+     * \author $Author: Patrick Merz Paranhos $
+     * \date $Date: 26/10/2011 $
+     * 
+     * Contact: patrick.merz_paranhos@dfki.de
+     */ 
+    class TractionForceGroupedIntoStep{
+	
+	public: 
+	    TractionForceGroupedIntoStep(); 
+	    
+	    /**
+	     * adds a traction force to the corresponding step 
+	     * @param wheel_idx - the index for the wheel 
+	     * @param traction - the measured traction force value 
+	     * @param encoder - the encoder position 
+	     */ 
+	    void addTraction(uint wheel_idx, double traction, double encoder); 
+	    
+	    /** 
+	     * @param wheel_idx - the index for the wheel 
+	     * @return the indentifier of the current completed step 
+	     */ 
+	    double getCompletedStepId(uint wheel_idx); 
+	    
+	    /**
+	     * @param wheel_idx - the index for the wheel 
+	     * @return the current completed step 
+	     */
+	    step getCompletedStep(uint wheel_idx); 
+	    
+	    
+	private:
+	    
+	    /** the vector of completed steps */ 
+	    step completed_step[4]; 
+	    
+	    /** the current step */ 
+	    step current_step[4];
+	    
+	    /**
+	    * Checks if the currents step is completed, which means transitioned from a double contact point to a DIFERENT double contact point
+	    * A wheel that goes back to the same double contact point (rotate back and foward) is not considered as having completed a step 
+	    * 
+	    * @param wheel_idx - the index for the wheel 
+	    * @return if the current step is complete or not 
+	    */
+	    bool isCurrentStepCompleted(uint wheel_idx);
+	    
+	    /** 
+	     * Uses the encoder value to calculate the step 
+	     * @return a unique value related to a wheel step 
+	     */ 
+	    double getStepId(double encoder); 
+	    
+	    /**
+	     * Initializes the current step
+	     * @param wheel_idx - the index for the wheel 
+	     */ 
+	    void initCurrentStep(uint wheel_idx); 
+	    
+	    /**
+	     * @param encoder the encoder reading 
+	     * @return the leg angle from 0 to 72 degree 
+	     */ 
+	    double getLegAngle( double encoder ); 
+	    
+    };
+    
     /**
      * \class HistogramTerrainClassification
      * 
@@ -24,8 +120,6 @@ namespace terrain_estimator
      */ 
     class HistogramTerrainClassification {
 	public: 
-	    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	    
 	    /** 
 	    * The histogram goes from 0 to max_torque  
 	    * all values above max_torque are grouped in a single bin

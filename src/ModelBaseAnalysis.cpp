@@ -4,6 +4,91 @@ using namespace Eigen;
 using namespace terrain_estimator;
 using namespace std;
 
+
+
+TractionForceGroupedIntoStep::TractionForceGroupedIntoStep()
+{
+    for( uint wheel_idx = 0; wheel_idx < 4; wheel_idx++) 
+	initCurrentStep(wheel_idx);
+}
+
+void TractionForceGroupedIntoStep::addTraction(uint wheel_idx, double traction, double encoder)
+{
+    double id = getStepId(encoder);
+    
+    if( id != current_step[wheel_idx].id) 
+    {
+	if( isCurrentStepCompleted(wheel_idx) )  
+	{
+	    completed_step[wheel_idx] = current_step[wheel_idx]; 
+	    initCurrentStep(wheel_idx);
+	}
+    }
+    
+    current_step[wheel_idx].id = id; 
+    
+    if( traction > current_step[wheel_idx].max_traction )
+	current_step[wheel_idx].max_traction = traction; 
+    else if( traction < current_step[wheel_idx].min_traction )
+	current_step[wheel_idx].min_traction = traction;
+    
+    double legAngle = getLegAngle(encoder); 
+    
+    if( legAngle > current_step[wheel_idx].max_angle )
+	current_step[wheel_idx].max_angle = legAngle; 
+    else if( legAngle < current_step[wheel_idx].min_angle )
+	current_step[wheel_idx].min_angle = legAngle;
+    
+    //this is to avoid filling the traction vector when there are stationary reading 
+    if(encoder == current_step[wheel_idx].last_encoder && current_step[wheel_idx].traction.size() > 0) 
+	current_step[wheel_idx].traction.back() = (current_step[wheel_idx].traction.back() + traction ) / 2; 
+    else 
+    {
+	current_step[wheel_idx].traction.push_back(traction);
+	current_step[wheel_idx].last_encoder = encoder; 
+    }
+    
+}
+
+double TractionForceGroupedIntoStep::getCompletedStepId(uint wheel_idx)
+{
+    return current_step[wheel_idx].id; 
+}
+
+step TractionForceGroupedIntoStep::getCompletedStep(uint wheel_idx)
+{
+    return completed_step[wheel_idx]; 
+}
+
+bool TractionForceGroupedIntoStep::isCurrentStepCompleted(uint wheel_idx)
+{
+    // a step should go from 0 to 70 degrees 
+    if( current_step[wheel_idx].min_angle < 2.0 && current_step[wheel_idx].max_angle > 70.0 )
+	return true; 
+    else
+	return false; 
+}
+
+double TractionForceGroupedIntoStep::getStepId(double encoder)
+{
+    return floor( encoder / (2.0 * M_PI / 5.0));
+}
+
+void TractionForceGroupedIntoStep::initCurrentStep(uint wheel_idx)
+{
+    current_step[wheel_idx].id = 0; 
+    current_step[wheel_idx].last_encoder = 0; 
+    current_step[wheel_idx].max_angle = 0;
+    current_step[wheel_idx].min_angle = 72;
+    current_step[wheel_idx].max_traction = -999; 
+    current_step[wheel_idx].min_traction = 999; 
+    current_step[wheel_idx].traction.clear(); 
+}
+
+/** ********* HistogramTerrainClassification **************** */ 
+/** ********* HistogramTerrainClassification **************** */ 
+/** ********* HistogramTerrainClassification **************** */ 
+
 HistogramTerrainClassification::HistogramTerrainClassification(int numb_bins, double max_torque)
 {
   
@@ -58,6 +143,9 @@ std::vector<double> HistogramTerrainClassification::getHistogram()
     return normalized_histogram; 
 }
 
+/** ********* SlipDetectionModelBased **************** */ 
+/** ********* SlipDetectionModelBased **************** */ 
+/** ********* SlipDetectionModelBased **************** */ 
 
 SlipDetectionModelBased::~SlipDetectionModelBased()
 {
@@ -176,7 +264,9 @@ double SlipDetectionModelBased::getWheelSlipSingleCase(){
 } 
 
 
-
+/** ********* AsguardOdometry **************** */ 
+/** ********* AsguardOdometry **************** */ 
+/** ********* AsguardOdometry **************** */ 
 
     
 double AsguardOdometry::numberOfCycles(double encoder) 
