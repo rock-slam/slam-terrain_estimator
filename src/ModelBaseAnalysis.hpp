@@ -101,52 +101,46 @@ namespace terrain_estimator
 	    
 	    /**
 	     * adds a traction force to the corresponding step 
-	     * @param wheel_idx - the index for the wheel 
 	     * @param traction - the measured traction force value 
 	     * @param encoder - the encoder position 
 	     */ 
-	    void addTraction(uint wheel_idx, double traction, double encoder); 
+	    void addTraction(double traction, double encoder); 
 	    
 	    /** 
-	     * @param wheel_idx - the index for the wheel 
 	     * @return the indentifier of the current completed step 
 	     */ 
-	    double getCompletedStepId(uint wheel_idx); 
+	    double getCompletedStepId(); 
 	    
 	    /**
-	     * @param wheel_idx - the index for the wheel 
 	     * @return the current completed step 
 	     */
-	    step getCompletedStep(uint wheel_idx); 
+	    step getCompletedStep(); 
 	    
 	    /**
-	     * @param wheel_idx - the index for the wheel 
 	     * @return the maximal value either step (completed or current) 
 	     */
-	    double getMaximalTractionEitherStep(uint wheel_idx); 
+	    double getMaximalTractionEitherStep(); 
 	    
 	    /**
-	     * @param wheel_idx - the index for the wheel 
 	     * @return the maximal value either step (completed or current) 
 	     */	    
-	     double getMinimalTractionEitherStep(uint wheel_idx); 
+	     double getMinimalTractionEitherStep(); 
 	     
 	private:
 	    
 	    /** the vector of completed steps */ 
-	    step completed_step[4]; 
+	    step completed_step; 
 	    
 	    /** the current step */ 
-	    step current_step[4];
+	    step current_step;
 	    
 	    /**
 	    * Checks if the currents step is completed, which means transitioned from a double contact point to a DIFERENT double contact point
 	    * A wheel that goes back to the same double contact point (rotate back and foward) is not considered as having completed a step 
 	    * 
-	    * @param wheel_idx - the index for the wheel 
 	    * @return if the current step is complete or not 
 	    */
-	    bool isCurrentStepCompleted(uint wheel_idx);
+	    bool isCurrentStepCompleted();
 	    
 	    /** 
 	     * Uses the encoder value to calculate the step 
@@ -156,9 +150,8 @@ namespace terrain_estimator
 	    
 	    /**
 	     * Initializes the current step
-	     * @param wheel_idx - the index for the wheel 
 	     */ 
-	    void initCurrentStep(uint wheel_idx); 
+	    void initCurrentStep(); 
 	    
 	    /**
 	     * @param encoder the encoder reading 

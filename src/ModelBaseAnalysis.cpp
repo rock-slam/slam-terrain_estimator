@@ -49,62 +49,61 @@ TractionForceGroupedIntoStep::TractionForceGroupedIntoStep(double angle_between_
 {
     this->angle_between_legs = angle_between_legs;
     
-    for( uint wheel_idx = 0; wheel_idx < 4; wheel_idx++) 
-	initCurrentStep(wheel_idx);
+    initCurrentStep();
 }
 
-void TractionForceGroupedIntoStep::addTraction(uint wheel_idx, double traction, double encoder)
+void TractionForceGroupedIntoStep::addTraction( double traction, double encoder)
 {
     double id = getStepId(encoder);
     
-    if( id != current_step[wheel_idx].id) 
+    if( id != current_step.id) 
     {
-	if( isCurrentStepCompleted(wheel_idx) )  
+	if( isCurrentStepCompleted() )  
 	{
-	    completed_step[wheel_idx] = current_step[wheel_idx]; 
-	    initCurrentStep(wheel_idx);
+	    completed_step = current_step; 
+	    initCurrentStep();
 	}
     }
     
-    current_step[wheel_idx].id = id; 
+    current_step.id = id; 
     
-    if( traction > current_step[wheel_idx].max_traction )
-	current_step[wheel_idx].max_traction = traction; 
-    else if( traction < current_step[wheel_idx].min_traction )
-	current_step[wheel_idx].min_traction = traction;
+    if( traction > current_step.max_traction )
+	current_step.max_traction = traction; 
+    else if( traction < current_step.min_traction )
+	current_step.min_traction = traction;
     
     double legAngle = getLegAngle(encoder); 
     
-    if( legAngle > current_step[wheel_idx].max_angle )
-	current_step[wheel_idx].max_angle = legAngle; 
-    else if( legAngle < current_step[wheel_idx].min_angle )
-	current_step[wheel_idx].min_angle = legAngle;
+    if( legAngle > current_step.max_angle )
+	current_step.max_angle = legAngle; 
+    else if( legAngle < current_step.min_angle )
+	current_step.min_angle = legAngle;
     
     //this is to avoid filling the traction vector when there are stationary reading 
-    if(encoder == current_step[wheel_idx].last_encoder && current_step[wheel_idx].traction.size() > 0) 
-	current_step[wheel_idx].traction.back() = (current_step[wheel_idx].traction.back() + traction ) / 2; 
+    if(encoder == current_step.last_encoder && current_step.traction.size() > 0) 
+	current_step.traction.back() = (current_step.traction.back() + traction ) / 2; 
     else 
     {
-	current_step[wheel_idx].traction.push_back(traction);
-	current_step[wheel_idx].last_encoder = encoder; 
+	current_step.traction.push_back(traction);
+	current_step.last_encoder = encoder; 
     }
     
 }
 
-double TractionForceGroupedIntoStep::getCompletedStepId(uint wheel_idx)
+double TractionForceGroupedIntoStep::getCompletedStepId()
 {
-    return current_step[wheel_idx].id; 
+    return current_step.id; 
 }
 
-step TractionForceGroupedIntoStep::getCompletedStep(uint wheel_idx)
+step TractionForceGroupedIntoStep::getCompletedStep()
 {
-    return completed_step[wheel_idx]; 
+    return completed_step; 
 }
 
-bool TractionForceGroupedIntoStep::isCurrentStepCompleted(uint wheel_idx)
+bool TractionForceGroupedIntoStep::isCurrentStepCompleted()
 {
     // a step should go from -pi/5 to pi/5 
-    if( current_step[wheel_idx].min_angle < -0.5 && current_step[wheel_idx].max_angle > 0.5 )
+    if( current_step.min_angle < -0.5 && current_step.max_angle > 0.5 )
 	return true; 
     else
 	return false; 
@@ -115,15 +114,15 @@ double TractionForceGroupedIntoStep::getStepId(double encoder)
     return floor( encoder / angle_between_legs);
 }
 
-void TractionForceGroupedIntoStep::initCurrentStep(uint wheel_idx)
+void TractionForceGroupedIntoStep::initCurrentStep()
 {
-    current_step[wheel_idx].id = 0; 
-    current_step[wheel_idx].last_encoder = 0; 
-    current_step[wheel_idx].max_angle = 3.14;
-    current_step[wheel_idx].min_angle = -3.14;
-    current_step[wheel_idx].max_traction = -999; 
-    current_step[wheel_idx].min_traction = 999; 
-    current_step[wheel_idx].traction.clear(); 
+    current_step.id = 0; 
+    current_step.last_encoder = 0; 
+    current_step.max_angle = 3.14;
+    current_step.min_angle = -3.14;
+    current_step.max_traction = -999; 
+    current_step.min_traction = 999; 
+    current_step.traction.clear(); 
 }
 
 double TractionForceGroupedIntoStep::getLegAngle( double encoder )
@@ -138,20 +137,20 @@ double TractionForceGroupedIntoStep::getLegAngle( double encoder )
 }
 
 
-double TractionForceGroupedIntoStep::getMaximalTractionEitherStep(uint wheel_idx)
+double TractionForceGroupedIntoStep::getMaximalTractionEitherStep()
 {
-    if(current_step[wheel_idx].max_traction > completed_step[wheel_idx].max_traction)
-	return current_step[wheel_idx].max_traction;
+    if(current_step.max_traction > completed_step.max_traction)
+	return current_step.max_traction;
     else
-	return completed_step[wheel_idx].max_traction;
+	return completed_step.max_traction;
 }
 
-double TractionForceGroupedIntoStep::getMinimalTractionEitherStep(uint wheel_idx)
+double TractionForceGroupedIntoStep::getMinimalTractionEitherStep()
 {
-    if(current_step[wheel_idx].min_traction < completed_step[wheel_idx].min_traction)
-	return current_step[wheel_idx].min_traction;
+    if(current_step.min_traction < completed_step.min_traction)
+	return current_step.min_traction;
     else
-	return completed_step[wheel_idx].min_traction;
+	return completed_step.min_traction;
 }
 
 /** ********* HISTOGRAM **************** */ 
@@ -301,7 +300,7 @@ bool SlipDetectionModelBased::slipDetection(Vector4d translation, double delta_h
 void SlipDetectionModelBased::analyzeConsecutiveSlips()
 {
     for(int i = 0; i < 4; i++) 
-	if( slip_votes[i] > 0 ) 
+	if( slip_votes[i] > 1 ) 
 	    consectuive_slip_votes[i] = consectuive_slip_votes[i] + slip_votes[i];
 	else
 	    consectuive_slip_votes[i] = 0; 
@@ -333,7 +332,7 @@ bool SlipDetectionModelBased::hasWheelSliped(int wheel)
 
 bool SlipDetectionModelBased::hasWheelConsecutivelySliped(int wheel)
 {
-    if( consectuive_slip_votes[wheel] >=4 ) 
+    if( consectuive_slip_votes[wheel] >=5 ) 
 	return true; 
     else 
 	return false; 
