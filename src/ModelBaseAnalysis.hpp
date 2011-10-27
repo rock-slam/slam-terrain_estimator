@@ -97,7 +97,7 @@ namespace terrain_estimator
     class TractionForceGroupedIntoStep{
 	
 	public: 
-	    TractionForceGroupedIntoStep(); 
+	    TractionForceGroupedIntoStep(double angle_between_legs);
 	    
 	    /**
 	     * adds a traction force to the corresponding step 
@@ -119,7 +119,18 @@ namespace terrain_estimator
 	     */
 	    step getCompletedStep(uint wheel_idx); 
 	    
+	    /**
+	     * @param wheel_idx - the index for the wheel 
+	     * @return the maximal value either step (completed or current) 
+	     */
+	    double getMaximalTractionEitherStep(uint wheel_idx); 
 	    
+	    /**
+	     * @param wheel_idx - the index for the wheel 
+	     * @return the maximal value either step (completed or current) 
+	     */	    
+	     double getMinimalTractionEitherStep(uint wheel_idx); 
+	     
 	private:
 	    
 	    /** the vector of completed steps */ 
@@ -151,9 +162,11 @@ namespace terrain_estimator
 	    
 	    /**
 	     * @param encoder the encoder reading 
-	     * @return the leg angle from 0 to 72 degree 
+	     * @return the leg angle from -PI/5 or +PI/5 
 	     */ 
 	    double getLegAngle( double encoder ); 
+	    
+	    double angle_between_legs;
 	    
     };
     
@@ -286,6 +299,16 @@ namespace terrain_estimator
 	    * @return true if it is likely that this wheel sliped
 	    */
 	    bool hasWheelSliped(int wheel); 
+
+	    /**
+	    * @return true if it is likely that this wheel sliped consecutiv time, which caracterize a strong slip chance. 
+	    */
+	    bool hasWheelConsecutivelySliped(int wheel); 
+	    
+	    /**
+	     * accumulate the slip votes if they are consecutive 
+	     */
+	    void analyzeConsecutiveSlips();
 	    
 	    /** The change in the heading between times step in the model */ 
 	    double delta_theta_model;
@@ -299,6 +322,8 @@ namespace terrain_estimator
 	    /** The number of votes casted by each of the hypotesis if this wheel is slipping or not */ 
 	    Vector4d slip_votes; 
 	    
+	    /** accumulates consecutive slip votes over a period of time (it reduces the speed of the slip detection, but increases the certantie */ 
+	    Vector4d consectuive_slip_votes; 
 	private:
 	    /**
 	     * Return if it is probable to have a single wheel slip
@@ -315,6 +340,7 @@ namespace terrain_estimator
 	    uint fr;
 	    uint rl;
 	    uint rr; 
+	    
 
 	    
     }; 

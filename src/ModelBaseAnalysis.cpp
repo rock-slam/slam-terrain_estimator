@@ -45,8 +45,10 @@ double HistogramTerrainClassification::getSVMValue()
 /** ********* TractionForceGroupedIntoStep **************** */ 
 /** ********* TractionForceGroupedIntoStep **************** */ 
 
-TractionForceGroupedIntoStep::TractionForceGroupedIntoStep()
+TractionForceGroupedIntoStep::TractionForceGroupedIntoStep(double angle_between_legs)
 {
+    this->angle_between_legs = angle_between_legs;
+    
     for( uint wheel_idx = 0; wheel_idx < 4; wheel_idx++) 
 	initCurrentStep(wheel_idx);
 }
@@ -101,8 +103,8 @@ step TractionForceGroupedIntoStep::getCompletedStep(uint wheel_idx)
 
 bool TractionForceGroupedIntoStep::isCurrentStepCompleted(uint wheel_idx)
 {
-    // a step should go from 0 to 70 degrees 
-    if( current_step[wheel_idx].min_angle < 2.0 && current_step[wheel_idx].max_angle > 70.0 )
+    // a step should go from -pi/5 to pi/5 
+    if( current_step[wheel_idx].min_angle < -0.5 && current_step[wheel_idx].max_angle > 0.5 )
 	return true; 
     else
 	return false; 
@@ -110,18 +112,46 @@ bool TractionForceGroupedIntoStep::isCurrentStepCompleted(uint wheel_idx)
 
 double TractionForceGroupedIntoStep::getStepId(double encoder)
 {
-    return floor( encoder / (2.0 * M_PI / 5.0));
+    return floor( encoder / angle_between_legs);
 }
 
 void TractionForceGroupedIntoStep::initCurrentStep(uint wheel_idx)
 {
     current_step[wheel_idx].id = 0; 
     current_step[wheel_idx].last_encoder = 0; 
-    current_step[wheel_idx].max_angle = 0;
-    current_step[wheel_idx].min_angle = 72;
+    current_step[wheel_idx].max_angle = 3.14;
+    current_step[wheel_idx].min_angle = -3.14;
     current_step[wheel_idx].max_traction = -999; 
     current_step[wheel_idx].min_traction = 999; 
     current_step[wheel_idx].traction.clear(); 
+}
+
+double TractionForceGroupedIntoStep::getLegAngle( double encoder )
+{
+    double legPos = encoder - (round(encoder / angle_between_legs) * angle_between_legs);
+    
+    if(legPos >= 0) 
+	legPos = M_PI / 5 - legPos; 
+    else
+	legPos = - M_PI / 5 - legPos; 
+    return legPos;
+}
+
+
+double TractionForceGroupedIntoStep::getMaximalTractionEitherStep(uint wheel_idx)
+{
+    if(current_step[wheel_idx].max_traction > completed_step[wheel_idx].max_traction)
+	return current_step[wheel_idx].max_traction;
+    else
+	return completed_step[wheel_idx].max_traction;
+}
+
+double TractionForceGroupedIntoStep::getMinimalTractionEitherStep(uint wheel_idx)
+{
+    if(current_step[wheel_idx].min_traction < completed_step[wheel_idx].min_traction)
+	return current_step[wheel_idx].min_traction;
+    else
+	return completed_step[wheel_idx].min_traction;
 }
 
 /** ********* HISTOGRAM **************** */ 
@@ -200,6 +230,8 @@ SlipDetectionModelBased::SlipDetectionModelBased(double axis_rotation, uint fl, 
       this->fr = fr; 
       this->rl = rl; 
       this->rr = rr; 
+      
+      consectuive_slip_votes.setZero(); 
 } 
 
 
@@ -259,9 +291,20 @@ bool SlipDetectionModelBased::slipDetection(Vector4d translation, double delta_h
 		slip_votes[i] = slip_votes[i] + 1; 
 		has_slip = true; 
 	    }
-  
+	    
+    analyzeConsecutiveSlips(); 
+    
     return has_slip; 
     
+}
+
+void SlipDetectionModelBased::analyzeConsecutiveSlips()
+{
+    for(int i = 0; i < 4; i++) 
+	if( slip_votes[i] > 0 ) 
+	    consectuive_slip_votes[i] = consectuive_slip_votes[i] + slip_votes[i];
+	else
+	    consectuive_slip_votes[i] = 0; 
 }
 
 bool SlipDetectionModelBased::hasSingleWheelSliped()
@@ -280,7 +323,23 @@ bool SlipDetectionModelBased::hasSingleWheelSliped()
     
 }
 
-bool SlipDetectionModelBased::hasThisWheelSingleSliped(int wheel)
+bool SlipDetectionModelBased::hasWheelSliped(int wheel)
+{
+    if( slip_votes[wheel] >= 2) 
+	return true; 
+    else 
+	return false; 
+}
+
+bool SlipDetectionModelBased::hasWheelConsecutivelySliped(int wheel)
+{
+    if( consectuive_slip_votes[wheel] >=4 ) 
+	return true; 
+    else 
+	return false; 
+}
+
+bool SlipDetectionModelBased::hasWheelSingleSliped(int wheel)
 {
 
     if(getWheelSlipSingleCase() ==  wheel)
