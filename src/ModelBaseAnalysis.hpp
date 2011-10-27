@@ -64,7 +64,7 @@ namespace terrain_estimator
     }; 
     
     /** A step information */ 
-    struct step{
+    struct Step{
 	/** the tractions force of the step  */
 	std::vector<double> traction; 
 	/** the maximal traction force in the step*/ 
@@ -114,7 +114,7 @@ namespace terrain_estimator
 	    /**
 	     * @return the current completed step 
 	     */
-	    step getCompletedStep(); 
+	    Step getCompletedStep(); 
 	    
 	    /**
 	     * @return the maximal value either step (completed or current) 
@@ -129,10 +129,10 @@ namespace terrain_estimator
 	private:
 	    
 	    /** the vector of completed steps */ 
-	    step completed_step; 
+	    Step completed_step; 
 	    
 	    /** the current step */ 
-	    step current_step;
+	    Step current_step;
 	    
 	    /**
 	    * Checks if the currents step is completed, which means transitioned from a double contact point to a DIFERENT double contact point

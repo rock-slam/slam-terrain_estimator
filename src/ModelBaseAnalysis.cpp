@@ -95,7 +95,7 @@ double TractionForceGroupedIntoStep::getCompletedStepId()
     return current_step.id; 
 }
 
-step TractionForceGroupedIntoStep::getCompletedStep()
+Step TractionForceGroupedIntoStep::getCompletedStep()
 {
     return completed_step; 
 }
