@@ -89,10 +89,12 @@ namespace terrain_estimator
 	    
 	    /** 
 	    * adds a histogram to the list of histograms 
-	    * @param histogram - a histogram of traction forces 
+	    * @param histogram_traction - a histogram of traction forces 
+	    * @param histogram_angular_velocity - a histogram of angular velocities 
+	    * @param histogram_linear_velocity - a histogram of linear velocities
 	    * @return if there are enougth histograms for calculating a terrain classification solution (at least N histograms) 
 	    */
-	    bool addHistogram(std::vector<double> histogram);
+	    bool addHistogram(std::vector<double> histogram, std::vector<double> histogram_angular_velocity,  std::vector<double> histogram_linear_velocity );
 	    
 	    /**
 	     * @return the combined histogram 
@@ -112,6 +114,10 @@ namespace terrain_estimator
     struct Step{
 	/** the tractions force of the step  */
 	std::vector<double> traction; 
+	/** the angular velocity of the robot during the step  */
+	std::vector<double> angular_velocity; 
+	/** the linear velocity of the robot  */
+	std::vector<double> linear_velocity; 
 	/** the maximal traction force in the step*/ 
 	double max_traction; 
 	/** the minimal traction force in the step*/ 
@@ -145,11 +151,20 @@ namespace terrain_estimator
 	    TractionForceGroupedIntoStep(double angle_between_legs);
 	    
 	    /**
-	     * adds a traction force to the corresponding step 
+	     * adds the data to be grouped into a step 
 	     * @param traction - the measured traction force value 
 	     * @param encoder - the encoder position 
+	     * @param angular_velocity - the robot angular velocity 
+	     * @param linear_velocity - the robot linear velocity 
 	     */ 
 	    void addTraction(double traction, double encoder); 
+	    
+	    /**
+	     * adds the velocity data to the current step 
+	     * @param angular_velocity - the robot angular velocity 
+	     * @param linear_velocity - the robot linear velocity 
+	     */ 	    
+	    void addRobotVelocities(double angular_velocity, double linear_velocity); 
 	    
 	    /** 
 	     * @return the indentifier of the current completed step 

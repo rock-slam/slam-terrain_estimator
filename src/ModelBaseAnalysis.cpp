@@ -78,9 +78,21 @@ HistogramTerrainClassification::HistogramTerrainClassification(uint number_histo
     this->number_histograms = number_histograms; 
 }
 
-bool HistogramTerrainClassification::addHistogram(std::vector<double> histogram)
+bool HistogramTerrainClassification::addHistogram(std::vector<double> histogram_traction, std::vector<double> histogram_angular_velocity,  std::vector<double> histogram_linear_velocity )
 {
-    histogram_list.push_back(histogram);
+    //groups the histogram of angular velocity, linear velocity and traction into a single histogram 
+    std::vector<double> grouped_histograms; 
+    for(uint i = 0; i < histogram_traction.size(); i++) 
+	grouped_histograms.push_back(histogram_traction.at(i));
+    
+    for(uint i = 0; i < histogram_angular_velocity.size(); i++) 
+	grouped_histograms.push_back(histogram_angular_velocity.at(i));
+    
+    for(uint i = 0; i < histogram_linear_velocity.size(); i++) 
+	grouped_histograms.push_back(histogram_linear_velocity.at(i));
+    
+    //creates the list of histograms
+    histogram_list.push_back(grouped_histograms);
     
     if(histogram_list.size() < number_histograms)
 	return false; 
@@ -89,11 +101,11 @@ bool HistogramTerrainClassification::addHistogram(std::vector<double> histogram)
 	histogram_list.pop_front(); 
     
     combined_histogram.clear(); 
-    for(uint i = 0; i < histogram.size() - 1; i++) 
+    for(uint i = 0; i < grouped_histograms.size(); i++) 
 	combined_histogram.push_back(histogram_list.at(0).at(i) / number_histograms );
     
     for(uint list = 1; list < number_histograms; list++)
-	for(uint i = 0; i < histogram.size() - 1; i++) 
+	for(uint i = 0; i < grouped_histograms.size(); i++) 
 	    combined_histogram.at(i) = combined_histogram.at(i) + histogram_list.at(list).at(i) / number_histograms;
 	
     return true; 
@@ -148,12 +160,20 @@ void TractionForceGroupedIntoStep::addTraction( double traction, double encoder)
     
     //this is to avoid filling the traction vector when there are stationary reading 
     if(encoder == current_step.last_encoder && current_step.traction.size() > 0) 
-	current_step.traction.back() = (current_step.traction.back() + traction ) / 2; 
+    {
+	current_step.traction.back() = (current_step.traction.back() + traction ) / 2;
+    }
     else 
     {
 	current_step.traction.push_back(traction);
 	current_step.last_encoder = encoder; 
     }
+    
+}
+void TractionForceGroupedIntoStep::addRobotVelocities( double angular_velocity, double linear_velocity)
+{
+    current_step.angular_velocity.push_back(angular_velocity);
+    current_step.linear_velocity.push_back(linear_velocity);
     
 }
 
@@ -190,6 +210,8 @@ void TractionForceGroupedIntoStep::initCurrentStep()
     current_step.max_traction = -999; 
     current_step.min_traction = 999; 
     current_step.traction.clear(); 
+    current_step.angular_velocity.clear();
+    current_step.linear_velocity.clear(); 
 }
 
 double TractionForceGroupedIntoStep::getLegAngle( double encoder )
