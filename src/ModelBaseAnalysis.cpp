@@ -4,9 +4,77 @@ using namespace Eigen;
 using namespace terrain_estimator;
 using namespace std;
 
-HistogramTerrainClassification::HistogramTerrainClassification(uint number_histograms, std::vector<double> svm_function)
+
+SVMTerrainClassification::SVMTerrainClassification(std::vector<TerrainType> terrain_types, int min_number_of_votes)
 {
-    this->svm_function = svm_function; 
+    this->terrain_types = terrain_types; 
+    this->min_number_of_votes = min_number_of_votes; 
+    svm_functions.clear(); 
+}
+
+void SVMTerrainClassification::addSVMClassifier(SVMConfiguration svm_function)
+{
+    svm_functions.push_back( svm_function); 
+}
+
+
+int SVMTerrainClassification::getIndexType(TerrainType type) 
+{
+    for(uint type_idx = 0; type_idx < terrain_types.size(); type_idx++)
+	if( type == terrain_types.at(type_idx)) 
+	    return type_idx; 
+    return 0; 
+}
+
+TerrainType SVMTerrainClassification::getTerrainClassification(std::vector<double> histogram)
+{
+    int votes[terrain_types.size()]; 
+    
+    for( uint type = 0; type < terrain_types.size(); type++) 
+	votes[type] = 0; 
+    
+    for(uint i = 0; i < svm_functions.size(); i++) 
+    {
+	SVMConfiguration svm = svm_functions.at(i); 
+
+	double svm_value = 0; 
+	for(uint i = 0; i < svm.function.size() - 1 ; i ++)
+	    svm_value = svm_value + histogram.at(i) * svm.function.at(i); 
+
+	if(svm_value >= svm.upper_threshold)
+	    votes[getIndexType(svm.upper_type)]++; 
+	else if(svm_value <= svm.lower_threshold) 
+	    votes[getIndexType(svm.lower_type)]++; 
+	else 
+	    votes[getIndexType(UNKNOWN)]++; 
+	
+    } 
+/*    
+    //debug 
+    for( int i = 0; i < 4; i++) 
+    {
+	std::cout << " Class " << i << " votes " <<  votes[i] << std::endl; 
+    }
+    std::cout << " *********************** " << std::endl; */
+
+    for( uint type_idx = 0; type_idx < terrain_types.size(); type_idx++) 
+    {
+	if( votes[type_idx] >= min_number_of_votes ) 
+	    return terrain_types.at(type_idx); 
+    }
+
+    return UNKNOWN; 
+
+}
+
+
+
+/** ********* HistogramTerrainClassification **************** */ 
+/** ********* HistogramTerrainClassification **************** */ 
+/** ********* HistogramTerrainClassification **************** */ 
+
+HistogramTerrainClassification::HistogramTerrainClassification(uint number_histograms )
+{
     this->number_histograms = number_histograms; 
 }
 
@@ -21,11 +89,11 @@ bool HistogramTerrainClassification::addHistogram(std::vector<double> histogram)
 	histogram_list.pop_front(); 
     
     combined_histogram.clear(); 
-    for(uint i = 0; i < histogram.size(); i++) 
+    for(uint i = 0; i < histogram.size() - 1; i++) 
 	combined_histogram.push_back(histogram_list.at(0).at(i) / number_histograms );
     
     for(uint list = 1; list < number_histograms; list++)
-	for(uint i = 0; i < histogram.size(); i++) 
+	for(uint i = 0; i < histogram.size() - 1; i++) 
 	    combined_histogram.at(i) = combined_histogram.at(i) + histogram_list.at(list).at(i) / number_histograms;
 	
     return true; 
@@ -36,10 +104,9 @@ std::vector<double> HistogramTerrainClassification::getCombinedHistogram()
     return combined_histogram; 
 }
 
-double HistogramTerrainClassification::getSVMValue()
-{
-    return 0; 
-}
+
+
+
 
 /** ********* TractionForceGroupedIntoStep **************** */ 
 /** ********* TractionForceGroupedIntoStep **************** */ 

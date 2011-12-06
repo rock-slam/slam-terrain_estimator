@@ -1,25 +1,38 @@
 #ifndef __TERRAIN_CONFIGURATION_TYPES__
 #define __TERRAIN_CONFIGURATION_TYPES__
-
+#include <vector>
 
 namespace terrain_estimator {
+
     
-    
-    /** 
-     * Configuration on how to construct a point cloud 
+    enum TerrainType{
+	UNKNOWN, 
+	GRASS, 
+	PATH,
+	PEBLES
+    }; 
+  
+    /**
+     * inputs a svm configuration for classifying a terrain type  
+    * @param svm_function - the svm classification function 
+    * @param lower_svm_threshold - all svm values lower than the lower_svm_threshold will be classified as the lower_type
+    * @param lower_type - the classification for all svm values lower than lower_svm_threshold 
+    * @param upper_svm_threshold - all svm values bigger than the upper_svm_threshold will be classified as the upper_type
+    * @param upper_type - the classification for all svm values bigger than upper_svm_threshold 
+
      */ 
-    struct VibrationConfiguration{
-      	/**'minimal number of acc samples for creating a sample for estimating terrain*/
-	unsigned int lines_per_terrain_sample;
-	/** minimum number of lines that dont overlap with the sample */
-	unsigned int min_line_advance; 
-	/** maximal gait standart deviation to accept the sample */
-	double max_gait_STD;
-	/** maximal angular velocity standart deviation to accept the sample */
-	double max_angular_velocity_STD; 
-	
+    struct SVMConfiguration{
+	std::vector<double> function; 
+	double lower_threshold;
+	TerrainType lower_type;
+	double upper_threshold; 
+	TerrainType upper_type; 
+	#ifndef __orogen
+	SVMConfiguration()
+	    : lower_type(UNKNOWN),
+	    upper_type(UNKNOWN){}
+	#endif
     };
-    
 }
 #endif
 

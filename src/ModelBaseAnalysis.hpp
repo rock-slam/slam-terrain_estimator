@@ -15,11 +15,65 @@ namespace terrain_estimator
 {
 
     /**
+     * \class SVMTerrainClassification
+     * 
+     * \brief
+     * A batch of SVM function is used to classify the histogram 
+     * \author $Author: Patrick Merz Paranhos $
+     * \date $Date: 26/10/2011 $
+     * 
+     * Contact: patrick.merz_paranhos@dfki.de
+     */ 
+    class SVMTerrainClassification{
+	public: 
+	    
+	    /**
+	     * The type that will be detected is the first type to acquire the minimal number of votes 
+	     * Each vote is casted by a svm function 
+	     * @param terrain_types - the list of terrains types in the classification
+	     * @param min_number_of_votes - minimal number of votes needed for a terrain to be detected (each svm function counts as one vote) -
+	     */
+	    SVMTerrainClassification(std::vector<TerrainType> terrain_types, int min_number_of_votes); 
+	    
+	    /**
+	     * @param SVMConfiguration - the svm classification function 
+	    */
+	    void addSVMClassifier(SVMConfiguration svm_function);
+	    
+	    /**
+	     * @param SVMConfiguration - the svm classification function 
+	    */
+	    void addSVMClassifier(std::vector<SVMConfiguration> svm_functions){ this->svm_functions = svm_functions; }
+	    
+	    /**
+	     * Calculates the svm value from the combined histogram 
+	     * The combined histogram needs to exist. 
+	     * @return the terrain type as classified by the svm
+	     */
+	    TerrainType getTerrainClassification(std::vector<double> histogram); 
+	
+	private: 
+	    
+	    /**
+	     * calculate the SVM value
+	     */
+	    void calculateSVMValue(); 
+	    
+	    int getIndexType(TerrainType type);
+	    
+	    std::vector < SVMConfiguration > svm_functions; 
+	    
+	    std::vector<TerrainType> terrain_types; 
+	    
+	    int min_number_of_votes;
+	    
+    }; 
+    
+    /**
      * \class HistogramTerrainClassification
      * 
      * \brief
      * A list of the last N histograms of traction values are combined into a single histogram.  
-     * An SVM function is used to classify the combined histogram 
      * \author $Author: Patrick Merz Paranhos $
      * \date $Date: 26/10/2011 $
      * 
@@ -30,9 +84,8 @@ namespace terrain_estimator
 	    
 	    /**
 	     * @param number_histograms - the number of histograms needed for a combined solution
-	     * @param svm_function - the svm classification function 
-	     */
-	    HistogramTerrainClassification(uint number_histograms, std::vector<double> svm_function);
+	    */
+	    HistogramTerrainClassification(uint number_histograms);
 	    
 	    /** 
 	    * adds a histogram to the list of histograms 
@@ -46,19 +99,11 @@ namespace terrain_estimator
 	     */
 	    std::vector<double> getCombinedHistogram(); 
 	    
-	    /**
-	     * @return the calculates SVM value for the combined histogram  
-	     */
-	    double getSVMValue(); 
 	
 	private: 
 	    std::deque < std::vector<double> > histogram_list; 
 	    
 	    std::vector<double> combined_histogram; 
-	    
-	    std::vector<double> svm_function; 
-	    
-	    double svm_value; 
 	    
 	    uint number_histograms;
     }; 
