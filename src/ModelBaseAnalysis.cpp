@@ -37,10 +37,12 @@ TerrainType SVMTerrainClassification::getTerrainClassification(std::vector<doubl
     {
 	SVMConfiguration svm = svm_functions.at(i); 
 
-	double svm_value = 0; 
+	double svm_value = svm.offset; 
 	for(uint i = 0; i < svm.function.size() - 1 ; i ++)
 	    svm_value = svm_value + histogram.at(i) * svm.function.at(i); 
-
+	
+	//std::cout << "SVM " << svm_value <<  " " << svm.upper_threshold << " " <<svm.lower_threshold<< std::endl; 
+	
 	if(svm_value >= svm.upper_threshold)
 	    votes[getIndexType(svm.upper_type)]++; 
 	else if(svm_value <= svm.lower_threshold) 
@@ -85,11 +87,11 @@ bool HistogramTerrainClassification::addHistogram(std::vector<double> histogram_
     for(uint i = 0; i < histogram_traction.size(); i++) 
 	grouped_histograms.push_back(histogram_traction.at(i));
     
-    for(uint i = 0; i < histogram_angular_velocity.size(); i++) 
-	grouped_histograms.push_back(histogram_angular_velocity.at(i));
-    
-    for(uint i = 0; i < histogram_linear_velocity.size(); i++) 
-	grouped_histograms.push_back(histogram_linear_velocity.at(i));
+//     for(uint i = 0; i < histogram_angular_velocity.size(); i++) 
+// 	grouped_histograms.push_back(histogram_angular_velocity.at(i));
+//     
+//     for(uint i = 0; i < histogram_linear_velocity.size(); i++) 
+// 	grouped_histograms.push_back(histogram_linear_velocity.at(i));
     
     //creates the list of histograms
     histogram_list.push_back(grouped_histograms);

@@ -15,6 +15,7 @@ namespace terrain_estimator {
     /**
      * inputs a svm configuration for classifying a terrain type  
     * @param svm_function - the svm classification function 
+    * @param offset - the offset of the classification function, so that the planes are separated around the 0 
     * @param lower_svm_threshold - all svm values lower than the lower_svm_threshold will be classified as the lower_type
     * @param lower_type - the classification for all svm values lower than lower_svm_threshold 
     * @param upper_svm_threshold - all svm values bigger than the upper_svm_threshold will be classified as the upper_type
@@ -23,6 +24,7 @@ namespace terrain_estimator {
      */ 
     struct SVMConfiguration{
 	std::vector<double> function; 
+	double offset; 
 	double lower_threshold;
 	TerrainType lower_type;
 	double upper_threshold; 
