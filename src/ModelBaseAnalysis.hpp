@@ -52,6 +52,12 @@ namespace terrain_estimator
 	     */
 	    TerrainType getTerrainClassification(std::vector<double> histogram); 
 	
+	    /**
+	     * @param TerrainType - the terrain type 
+	     * @return the probability distribution of a type based on the last terrain classification 
+	     */ 
+	    double getProbability(TerrainType type); 
+	    
 	private: 
 	    
 	    /**
@@ -66,6 +72,10 @@ namespace terrain_estimator
 	    std::vector<TerrainType> terrain_types; 
 	    
 	    int min_number_of_votes;
+	    
+ 	    std::vector<double> probability; 
+	    
+	    double svm_value;
 	    
     }; 
     

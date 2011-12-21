@@ -28,6 +28,10 @@ int SVMTerrainClassification::getIndexType(TerrainType type)
 
 TerrainType SVMTerrainClassification::getTerrainClassification(std::vector<double> histogram)
 {
+    probability.clear(); 
+    for(uint type = 0; type < terrain_types.size(); type++)
+	probability.push_back(0);
+    
     int votes[terrain_types.size()]; 
     
     for( uint type = 0; type < terrain_types.size(); type++) 
@@ -37,7 +41,7 @@ TerrainType SVMTerrainClassification::getTerrainClassification(std::vector<doubl
     {
 	SVMConfiguration svm = svm_functions.at(i); 
 
-	double svm_value = svm.offset; 
+	svm_value = svm.offset; 
 	for(uint i = 0; i < svm.function.size() - 1 ; i ++)
 	    svm_value = svm_value + histogram.at(i) * svm.function.at(i); 
 	
@@ -62,11 +66,23 @@ TerrainType SVMTerrainClassification::getTerrainClassification(std::vector<doubl
     for( uint type_idx = 0; type_idx < terrain_types.size(); type_idx++) 
     {
 	if( votes[type_idx] >= min_number_of_votes ) 
+	{
+	    if(fabs(svm_value) > 2) 
+		probability[type_idx] = 1;
+	    else
+		probability[type_idx] = 0.5;
+	    
 	    return terrain_types.at(type_idx); 
+	}
     }
 
     return UNKNOWN; 
 
+}
+
+double SVMTerrainClassification::getProbability(TerrainType type)
+{
+    return probability.at(getIndexType(type));
 }
 
 
@@ -87,11 +103,11 @@ bool HistogramTerrainClassification::addHistogram(std::vector<double> histogram_
     for(uint i = 0; i < histogram_traction.size(); i++) 
 	grouped_histograms.push_back(histogram_traction.at(i));
     
-//     for(uint i = 0; i < histogram_angular_velocity.size(); i++) 
-// 	grouped_histograms.push_back(histogram_angular_velocity.at(i));
-//     
-//     for(uint i = 0; i < histogram_linear_velocity.size(); i++) 
-// 	grouped_histograms.push_back(histogram_linear_velocity.at(i));
+    for(uint i = 0; i < histogram_angular_velocity.size(); i++) 
+	grouped_histograms.push_back(histogram_angular_velocity.at(i));
+    
+    for(uint i = 0; i < histogram_linear_velocity.size(); i++) 
+	grouped_histograms.push_back(histogram_linear_velocity.at(i));
     
     //creates the list of histograms
     histogram_list.push_back(grouped_histograms);
@@ -391,7 +407,7 @@ bool SlipDetectionModelBased::slipDetection(Vector4d translation, double delta_h
 void SlipDetectionModelBased::analyzeConsecutiveSlips()
 {
     for(int i = 0; i < 4; i++) 
-	if( slip_votes[i] > 1 ) 
+	if( slip_votes[i] > 1 ) //1
 	    consectuive_slip_votes[i] = consectuive_slip_votes[i] + slip_votes[i];
 	else
 	    consectuive_slip_votes[i] = 0; 
