@@ -9,7 +9,7 @@ namespace terrain_estimator {
 	UNKNOWN, 
 	GRASS, 
 	PATH,
-	PEBLES
+	PEBBLES
     }; 
   
     /**
