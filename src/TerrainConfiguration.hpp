@@ -1,6 +1,8 @@
 #ifndef __TERRAIN_CONFIGURATION_TYPES__
 #define __TERRAIN_CONFIGURATION_TYPES__
+
 #include <vector>
+#include <base/time.h>
 
 namespace terrain_estimator {
 
@@ -11,6 +13,29 @@ namespace terrain_estimator {
 	PATH,
 	PEBBLES
     }; 
+
+    /**
+     * @param terrain - the terrain type
+     * @param probability - the probability 
+     */
+    struct TerrainProbability{
+	TerrainType type; 
+	double probability; 
+	TerrainProbability()
+	    : type(UNKNOWN){}
+    }; 
+    
+    /**
+    * @param time - the time at the end of the step where the slip was detected
+     * @param wheel_idx - the wheel index where the terrain was classified
+     * @param terrain - the terrain type with the probability 
+     */
+    struct TerrainClassification{
+	base::Time time; 
+	int wheel_idx; 
+	std::vector<TerrainProbability> terrain;
+    }; 
+    
   
     /**
      * inputs a svm configuration for classifying a terrain type  

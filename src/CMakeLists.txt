@@ -8,4 +8,7 @@ set(TERRAIN_SRCS
     )
 rock_library(terrain_estimator 
     SOURCES ${TERRAIN_SRCS} 
-    HEADERS ${TERRAIN_HDRS})
+    HEADERS ${TERRAIN_HDRS}
+    DEPS_PKGCONFIG base-types
+    )
+
