@@ -96,8 +96,8 @@ namespace terrain_estimator {
 		const terrain_estimator::TerrainProbability &tp( *it );
 		switch( tp.type )
 		{
-		    case terrain_estimator::GRASS: prop_terrain[0] = tp.probability; break;
-		    case terrain_estimator::PATH: prop_terrain[1] = tp.probability; break;
+		    case terrain_estimator::PATH: prop_terrain[0] = tp.probability; break;
+		    case terrain_estimator::GRASS: prop_terrain[1] = tp.probability; break;
 		    case terrain_estimator::PEBBLES: prop_terrain[2] = tp.probability; break;
 		    default: break;
 		}
