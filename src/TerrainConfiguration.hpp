@@ -123,7 +123,13 @@ namespace terrain_estimator {
 
 	    // for now use the crudest way possible to get the probability
 	    // for the measurement
-	    double prob = 1.0 - (visual_terrain - prop_terrain).norm() / sqrt( 3.0 );
+	    //double prob = 1.0 - (visual_terrain - prop_terrain).norm() / sqrt( 3.0 );
+
+	    int idx1, idx2;
+	    prop_terrain.maxCoeff( &idx1 );
+	    visual_terrain.maxCoeff( &idx2 );
+
+	    double prob = (idx1 == idx2) ? 0.9 : 0.1;
 
 	    return prob;
 	}
