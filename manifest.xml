@@ -6,8 +6,8 @@
         DFKI/robotik@dfki.de
     </copyright>
     <license>LGPL v2 or later</license>
-    <depend package="fftw3" />
     <depend package="base/types" />
+    <depend package="eigen3" />
     <tags>needs_opt</tags>
 
 </package>
