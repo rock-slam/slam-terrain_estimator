@@ -469,18 +469,16 @@ double SlipDetectionModelBased::getWheelSlipSingleCase(){
 } 
 
 
-/** ********* AsguardOdometry **************** */ 
-/** ********* AsguardOdometry **************** */ 
-/** ********* AsguardOdometry **************** */ 
+/** ********* LegWheelOdometry **************** */ 
 
     
-double AsguardOdometry::numberOfCycles(double encoder) 
+double LegWheelOdometry::numberOfCycles(double encoder) 
 {
     return floor(encoder / angle_between_legs);   
     
 }
 
-double AsguardOdometry::getLegPos(double external_encoder_value) 
+double LegWheelOdometry::getLegPos(double external_encoder_value) 
 { 
   double legPos = external_encoder_value - (round(external_encoder_value / angle_between_legs) * angle_between_legs);
     
@@ -491,7 +489,7 @@ double AsguardOdometry::getLegPos(double external_encoder_value)
     return legPos;
 }
 
-double AsguardOdometry::translationAxis(double encoder, double initial_encoder)
+double LegWheelOdometry::translationAxis(double encoder, double initial_encoder)
 {
     double leg_pos = getLegPos(encoder); 
     double init_leg_pos = getLegPos(initial_encoder); 
@@ -503,7 +501,7 @@ double AsguardOdometry::translationAxis(double encoder, double initial_encoder)
     
 }
 
-Vector4d AsguardOdometry::translationAxes(Vector4d encoder){
+Vector4d LegWheelOdometry::translationAxes(Vector4d encoder){
     Vector4d translation; 
     for(int i = 0; i < 4; i++) 
       translation[i] = translationAxis(encoder[i], init_encoder[i]); 

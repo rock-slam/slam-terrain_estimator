@@ -409,7 +409,7 @@ namespace terrain_estimator
     }; 
     
      /**
-     * \class AsguardOdometry
+     * \class LegWheelOdometry
      * 
      * \brief
      * Using asguard model it calculates the translation of each axis in the plane paralel to the ground
@@ -421,12 +421,12 @@ namespace terrain_estimator
      * 
      * Contact: patrick.merz_paranhos@dfki.de
      */ 
-    class AsguardOdometry{
+    class LegWheelOdometry{
 	    
     public: 
 	    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	    
-	    AsguardOdometry(double angle_between_legs, double radius){this->angle_between_legs = angle_between_legs; this->radius = radius; } 
+	    LegWheelOdometry(double angle_between_legs, double radius){this->angle_between_legs = angle_between_legs; this->radius = radius; } 
 	    
 
 	    void setInitialEncoder(Vector4d encoder){ this->init_encoder = encoder; }  
