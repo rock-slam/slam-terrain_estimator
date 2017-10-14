@@ -2,8 +2,8 @@
 #define __TERRAIN_CONFIGURATION_TYPES__
 
 #include <vector>
-#include <base/time.h>
-#include <base/eigen.h>
+#include <base/Time.hpp>
+#include <base/Eigen.hpp>
 
 namespace terrain_estimator {
 
